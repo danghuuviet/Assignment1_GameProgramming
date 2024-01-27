@@ -13,7 +13,7 @@ class GameManager:
         self.ZOMBIE_HEIGHT = 81
         self.FONT_SIZE = 31
         self.FONT_TOP_MARGIN = 26
-        self.LEVEL_SCORE_GAP = 3
+        self.LEVEL_SCORE_GAP = 5
         self.LEFT_MOUSE_BUTTON = 1
         self.GAME_TITLE = "Whack A Zombie"
         # Initialize player's score, number of missed hits and level
@@ -52,6 +52,8 @@ class GameManager:
         self.debugger = Debugger("debug")
         # Sound effects
         self.soundEffect = SoundEffect()
+        # Initialize the timer
+        self.timer_duration = 60  # 60 seconds
 
     # Calculate the player level according to his current score & the LEVEL_SCORE_GAP constant
     def get_player_level(self):
@@ -97,35 +99,30 @@ class GameManager:
         misses_text_pos.centerx = self.SCREEN_WIDTH / 5 * 4
         misses_text_pos.centery = self.FONT_TOP_MARGIN
         self.screen.blit(misses_text, misses_text_pos)
-        # Update the player's level
-        current_level_string = "RANK: " + str(self.level)
-        level_text = self.font_obj.render(current_level_string, True, (255, 255, 255))
-        level_text_pos = level_text.get_rect()
-        level_text_pos.centerx = self.SCREEN_WIDTH / 5 * 1
-        level_text_pos.centery = self.FONT_TOP_MARGIN
-        self.screen.blit(level_text, level_text_pos)
+
 
     # Start the game's main loop
     # Contains some logic for handling animations, zombie hit events, etc..
     def game_over(self):
         # Display a game over screen
-        game_over_text = self.font_obj.render("Game Over", True, (255, 0, 0))
-        game_over_text_pos = game_over_text.get_rect()
-        game_over_text_pos.centerx = self.SCREEN_WIDTH // 2
-        game_over_text_pos.centery = self.SCREEN_HEIGHT // 2 - 50
 
         final_score_text = self.font_obj.render("Final Score: " + str(self.score), True, (255, 255, 255))
         final_score_text_pos = final_score_text.get_rect()
         final_score_text_pos.centerx = self.SCREEN_WIDTH // 2
-        final_score_text_pos.centery = self.SCREEN_HEIGHT // 2
+        final_score_text_pos.centery = self.SCREEN_HEIGHT // 2 -50
+
+        final_misses_text = self.font_obj.render("Misses: " + str(self.misses), True, (255, 255, 255))
+        final_misses_text_pos = final_misses_text.get_rect()
+        final_misses_text_pos.centerx = self.SCREEN_WIDTH // 2
+        final_misses_text_pos.centery = self.SCREEN_HEIGHT // 2
 
         restart_text = self.font_obj.render("Press 'R' to Restart", True, (255, 255, 255))
         restart_text_pos = restart_text.get_rect()
         restart_text_pos.centerx = self.SCREEN_WIDTH // 2
         restart_text_pos.centery = self.SCREEN_HEIGHT // 2 + 50
 
-        self.screen.blit(game_over_text, game_over_text_pos)
         self.screen.blit(final_score_text, final_score_text_pos)
+        self.screen.blit(final_misses_text, final_misses_text_pos)
         self.screen.blit(restart_text, restart_text_pos)
 
         pygame.display.flip()
@@ -156,6 +153,7 @@ class GameManager:
         left = 0
         # Time control variables
         clock = pygame.time.Clock()
+        start_time = pygame.time.get_ticks()
 
         for i in range(len(self.zombie)):
             self.zombie[i].set_colorkey((0, 0, 0))
@@ -225,6 +223,20 @@ class GameManager:
                 cycle_time = 0
             # Update the display
             pygame.display.flip()
+            elapsed_time = (pygame.time.get_ticks() - start_time) // 1000
+            remaining_time = max(0, self.timer_duration - elapsed_time)
+
+            # Display the timer
+            timer_text = self.font_obj.render(f"TIME: {remaining_time}", True, (255, 255, 255))
+            timer_text_pos = timer_text.get_rect()
+            timer_text_pos.centerx = self.SCREEN_WIDTH / 5 * 1
+            timer_text_pos.centery = self.FONT_TOP_MARGIN
+            self.screen.blit(timer_text, timer_text_pos)
+            # Check if time is up
+            if remaining_time == 0:
+                self.soundEffect.gameOver()
+                self.game_over()
+                return
 
 
 
